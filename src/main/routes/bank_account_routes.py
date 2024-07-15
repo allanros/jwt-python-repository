@@ -7,37 +7,47 @@ from src.main.composer.balance_editor_composer import balance_editor_composer
 
 from src.main.middlewares.auth_jwt import auth_jwt_verify
 
-bank_routes_bp = Blueprint('bank_routes', __name__)
+from src.errors.error_handler import handle_errors
 
-@bank_routes_bp.route('/test', methods=['POST'])
-def route_test():
-    http_request = HttpRequest(body=request.json)
-    return jsonify(http_request.body), 200
+bank_routes_bp = Blueprint('bank_routes', __name__)
 
 @bank_routes_bp.route('/bank/registry', methods=['POST'])
 def registry_user():
-    http_request = HttpRequest(body=request.json)
-    response = user_register_composer().handle(request=http_request)
+    try:
+        http_request = HttpRequest(body=request.json)
+        response = user_register_composer().handle(request=http_request)
 
-    return jsonify(response.body), response.status_code
+        return jsonify(response.body), response.status_code
+    except Exception as e:
+        response = handle_errors(e)
+        return jsonify(response.body), response.status_code
 
 @bank_routes_bp.route('/bank/login', methods=['POST'])
 def create_login():
-    http_request = HttpRequest(body=request.json)
-    response = login_creator_composer().handle(request=http_request)
+    try:
+        http_request = HttpRequest(body=request.json)
+        response = login_creator_composer().handle(request=http_request)
 
-    return jsonify(response.body), response.status_code
+        return jsonify(response.body), response.status_code
+    except Exception as e:
+        response = handle_errors(e)
+        return jsonify(response.body), response.status_code
 
 @bank_routes_bp.route('/bank/balance/<int:user_id>', methods=['PATCH'])
 def edit_balance(user_id):
-    token_information = auth_jwt_verify()
-    http_request = HttpRequest(
-        body=request.json,
-        params={'user_id': user_id},
-        token_infos=token_information,
-        headers=request.headers
-    )
+    try:
+        token_information = auth_jwt_verify()
+        http_request = HttpRequest(
+            body=request.json,
+            params={'user_id': user_id},
+            token_infos=token_information,
+            headers=request.headers
+        )
 
-    response = balance_editor_composer().handle(request=http_request)
+        response = balance_editor_composer().handle(request=http_request)
 
-    return jsonify(response.body), response.status_code
+        return jsonify(response.body), response.status_code
+
+    except Exception as e:
+            response = handle_errors(e)
+            return jsonify(response.body), response.status_code
